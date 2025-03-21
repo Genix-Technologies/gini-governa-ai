@@ -5,10 +5,15 @@ import docx2txt
 import PyPDF2
 from io import BytesIO
 import random
-import time  # For simulating real-time updates
-import speech_recognition as sr  # For speech-to-text
-from gtts import gTTS  # For text-to-speech
-import pandas as pd  # For tabular display
+import time
+import pandas as pd
+from streamlit_webrtc import webrtc_streamer, WebRtcMode
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
+import av  # For audio/video processing
+import numpy as np
+RTC_CONFIGURATION = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+)
 
 # ------------------ 🌐 Set OpenAI API Key ------------------
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -54,31 +59,80 @@ def extract_text_from_file(uploaded_file):
         st.warning(f"⚠ Could not read {uploaded_file.name}: {e}")
     return file_text
 
-# ------------------ 🎙️ Speech-to-Text ------------------
+# ------------------ 🎙️ Speech-to-Text with streamlit-webrtc ------------------
+
 def record_audio():
-    """Records audio, processes it, and returns the recognized text."""
-    recognizer = sr.Recognizer()
-    try:
-        with sr.Microphone() as source:
-            st.info("🎙️ Recording... Please speak into your microphone.")
-            recognizer.adjust_for_ambient_noise(source, duration=1)
-            audio_data = recognizer.listen(source, timeout=5, phrase_time_limit=10)
-            st.success("✅ Recording complete. Processing audio...")
-        query_text = recognizer.recognize_google(audio_data)
-        st.success(f"🎉 You said: {query_text}")
-        return query_text
-    except sr.UnknownValueError:
-        st.warning("🤷 I couldn't understand what you said. Please try again.")
-    except sr.RequestError as e:
-        st.error(f"⚠ Error contacting Google API: {e}")
-    except Exception as e:
-        st.error(f"❗ An unexpected error occurred: {e}")
+    st.info("🎙️ Please speak into your microphone.")
+
+    def audio_frame_callback(frame: av.AudioFrame) -> av.AudioFrame:
+        audio_data = frame.to_ndarray()
+        if "audio_frames" not in st.session_state:
+            st.session_state.audio_frames = []
+        st.session_state.audio_frames.append(audio_data)
+        return frame
+
+    # Initialize session state for WebRTC context
+    if "webrtc_initialized" not in st.session_state:
+        st.session_state.webrtc_initialized = False
+
+    # WebRTC configuration
+    frontend_rtc_configuration = {
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+    }
+    server_rtc_configuration = {
+        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+    }
+
+    # Start the WebRTC streamer only if not already initialized
+    if not st.session_state.webrtc_initialized:
+        webrtc_ctx = webrtc_streamer(
+            key="audio-recorder",
+            mode=WebRtcMode.SENDONLY,
+            media_stream_constraints={"audio": True, "video": False},
+            audio_frame_callback=audio_frame_callback,
+            frontend_rtc_configuration=frontend_rtc_configuration,  # Updated argument
+            server_rtc_configuration=server_rtc_configuration,  # Updated argument
+        )
+        st.session_state.webrtc_initialized = True
+    else:
+        webrtc_ctx = None
+
+    # Process audio frames if the stream is active
+    if webrtc_ctx:
+        if webrtc_ctx.state.playing:
+            st.success("✅ Audio capture complete. Processing audio...")
+            if "audio_frames" in st.session_state and st.session_state.audio_frames:
+                audio_data = np.concatenate(st.session_state.audio_frames)
+                recognizer = sr.Recognizer()
+                audio_data = sr.AudioData(
+                    audio_data.tobytes(),
+                    sample_rate=16000,
+                    sample_width=2,
+                )
+                try:
+                    query_text = recognizer.recognize_google(audio_data)
+                    st.success(f"🎉 You said: {query_text}")
+                    return query_text
+                except sr.UnknownValueError:
+                    st.warning("🤷 I couldn't understand what you said. Please try again.")
+                except sr.RequestError as e:
+                    st.error(f"⚠ Error contacting Google API: {e}")
+                except Exception as e:
+                    st.error(f"❗ An unexpected error occurred: {e}")
+            else:
+                st.warning("No audio frames received. Please try again.")
+        else:
+            st.warning("❗ Microphone access not granted or stream not ready.")
+    else:
+        st.warning("❗ WebRTC streamer not initialized. Please try again.")
+
     return ""
 
 # ------------------ 🎤 Text-to-Speech ------------------
 def speak_text(text):
     """Converts text to speech and plays it."""
     try:
+        from gtts import gTTS
         tts = gTTS(text=text, lang="en")
         tts.save("response.mp3")
         st.audio("response.mp3", format="audio/mp3")
@@ -144,7 +198,7 @@ def display_voting_dashboard(df, stats):
 def main():
     st.set_page_config(page_title="Governa AI - Board Intelligence", layout="wide")
     st.title("📌 Governa AI - Real-time Board Intelligence")
-    
+
     # 🕒 Meeting Agenda
     st.header("📅 Upcoming Board Meeting Details")
     st.markdown("""

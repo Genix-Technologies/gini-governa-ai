@@ -1,10 +1,7 @@
-# Use official Python image
 FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies required for PyAudio, FFmpeg, and other libraries
 RUN apt-get update && apt-get install -y \
     python3-pyaudio \
     portaudio19-dev \
@@ -14,20 +11,20 @@ RUN apt-get update && apt-get install -y \
     libavcodec-extra \
     build-essential \
     python3-dev \
-    && apt-get clean
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file to the container
 COPY requirements.txt /app/requirements.txt
 
-# Upgrade pip and install required packages
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy application files
+RUN pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host pypi.python.org \
+    --trusted-host files.pythonhosted.org \
+    -r /app/requirements.txt
+
 COPY . /app
 
-# Expose Flask and Streamlit ports
-EXPOSE 5000 8501
+EXPOSE 8501
 
-# Run Flask app (Streamlit will be spawned automatically)
-CMD ["python", "flask_app.py"]
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
