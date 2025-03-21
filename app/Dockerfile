@@ -1,6 +1,12 @@
 # Use official Python image as a parent image
 FROM python:3.11-slim
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    OPENAI_API_KEY=your_openai_api_key \
+    STREAMLIT_SERVER_PORT=8501 \
+    STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    
 # Set the working directory in the container
 WORKDIR /app
 
