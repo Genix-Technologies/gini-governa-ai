@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  governa-ai:
+    build: ./app
+    container_name: governa-ai
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./app:/app
+    environment:
+      - OPENAI_API_KEY=your_openai_api_key
+    restart: unless-stopped
