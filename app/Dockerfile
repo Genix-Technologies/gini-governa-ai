@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set the working directory
 WORKDIR /app
 
-# Install system dependencies required for PyAudio and other libraries
+# Install system dependencies required for PyAudio, FFmpeg, and other libraries
 RUN apt-get update && apt-get install -y \
     python3-pyaudio \
     portaudio19-dev \
@@ -21,7 +21,13 @@ COPY requirements.txt /app/requirements.txt
 
 # Upgrade pip and install required packages
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Add --trusted-host to avoid SSL errors (optional if SSL issues persist)
+RUN pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host pypi.python.org \
+    --trusted-host files.pythonhosted.org \
+    -r /app/requirements.txt
 
 # Copy application files
 COPY . /app
