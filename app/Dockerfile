@@ -1,7 +1,7 @@
-# Use the official Python image
+# Use official Python image
 FROM python:3.11-slim
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
 # Install system dependencies required for PyAudio, FFmpeg, and other libraries
@@ -21,19 +21,13 @@ COPY requirements.txt /app/requirements.txt
 
 # Upgrade pip and install required packages
 RUN pip install --upgrade pip
-
-# Add --trusted-host to avoid SSL errors (optional if SSL issues persist)
-RUN pip install --no-cache-dir \
-    --trusted-host pypi.org \
-    --trusted-host pypi.python.org \
-    --trusted-host files.pythonhosted.org \
-    -r /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copy application files
 COPY . /app
 
-# Expose the port for Streamlit
-EXPOSE 8501
+# Expose Flask and Streamlit ports
+EXPOSE 5000 8501
 
-# Run the application
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Run Flask app (Streamlit will be spawned automatically)
+CMD ["python", "flask_app.py"]

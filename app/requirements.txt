@@ -6,3 +6,13 @@ SpeechRecognition==3.10.0
 gTTS==2.3.2
 pandas==2.1.3
 pyaudio
+flask
+flask-cors
+streamlit
+requests
+pyaudio
+gTTS
+openai
+PyPDF2
+docx2txt
+pandas
