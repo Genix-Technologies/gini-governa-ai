@@ -1,23 +1,32 @@
-# Use official Python image as a parent image
+# Use the official Python image
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    OPENAI_API_KEY=your_openai_api_key \
-    STREAMLIT_SERVER_PORT=8501 \
-    STREAMLIT_SERVER_ADDRESS=0.0.0.0
-    
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install system dependencies required for PyAudio and other libraries
+RUN apt-get update && apt-get install -y \
+    python3-pyaudio \
+    portaudio19-dev \
+    libportaudio2 \
+    libportaudiocpp0 \
+    ffmpeg \
+    libavcodec-extra \
+    build-essential \
+    python3-dev \
+    && apt-get clean
 
-# Copy the current directory contents into the container
-COPY . .
+# Copy requirements file to the container
+COPY requirements.txt /app/requirements.txt
 
-# Expose port 8501 for Streamlit
+# Upgrade pip and install required packages
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Copy application files
+COPY . /app
+
+# Expose the port for Streamlit
 EXPOSE 8501
 
 # Run the application
