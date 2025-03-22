@@ -9,8 +9,7 @@ import time
 import speech_recognition as sr  # For speech-to-text
 from gtts import gTTS           # For text-to-speech
 import pandas as pd             # For tabular display
-import streamlit_webrtc as webrtc
-import av
+
 # ------------------- CONFIGURATION & SESSION INITIALIZATION ------------------- #
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -71,34 +70,6 @@ def record_audio():
         st.error(f"⚠ Could not process the audio: {e}")
         return ""
 
-
-def record_audio_streamlit():
-    """Records audio using Streamlit components and returns the recognized text."""
-    recognizer = sr.Recognizer()
-
-    # Use a placeholder for the audio recording status
-    status_placeholder = st.empty()
-
-    try:
-        with sr.Microphone() as source:
-            status_placeholder.info("🎙️ Recording... Please speak into your microphone.")
-            audio_data = recognizer.listen(source, phrase_time_limit=10)
-
-        status_placeholder.empty() #clear the info message.
-        query_text = recognizer.recognize_google(audio_data)
-        st.success(f"You said: {query_text}")
-        return query_text
-
-    except sr.UnknownValueError:
-        status_placeholder.error("⚠ Google Speech Recognition could not understand audio")
-        return ""
-    except sr.RequestError as e:
-        status_placeholder.error(f"⚠ Could not request results from Google Speech Recognition service; {e}")
-        return ""
-    except Exception as e:
-        status_placeholder.error(f"⚠ Could not process the audio: {e}")
-        return ""
-    
 # ---------- Text-to-Speech ----------
 def speak_text(text):
     """
@@ -277,9 +248,12 @@ def simulate_voting_with_user(voting_questions, user_votes, num_simulated=10):
     Returns a DataFrame with board members as rows and questions as columns.
     """
     data = {}
+    first_names = ["Alice Johnson", "Michael ", "Sophia", "David", "Emily", "James", "Olivia", "Daniel", "Charlotte", "Matthew", "Aren"]
+
+
     data["You"] = {q: user_votes.get(q, "Abstain") for q in voting_questions}
     for i in range(1, num_simulated + 1):
-        member_name = f"Board Member {i}"
+        member_name = first_names[i]
         data[member_name] = {q: random.choice(["Yes", "No", "Abstain"]) for q in voting_questions}
     df = pd.DataFrame(data).T
     return df
@@ -340,13 +314,6 @@ def main():
     # Two-column layout: Main Workspace and Insights Panel
     main_col, insights_col = st.columns([3, 1])
 
-    st.title("Audio Recording with Streamlit")
-
-    if st.button("Start Recording"):
-        transcribed_text = record_audio_streamlit()
-        if transcribed_text:
-            st.write("Transcribed Text:", transcribed_text)
-            
     with main_col:
         st.header("Meeting Dashboard")
         st.markdown("### Meeting Agenda")
@@ -368,8 +335,7 @@ def main():
             "🎙 AI Chat", 
             "🗳 Voting", 
             "💬 Comments", 
-            "⏱️ Live Meeting Analysis",
-             "📹 WebRTC Meeting"
+            "⏱️ Live Meeting Analysis"
         ])
 
         # --- Upload Documents ---
@@ -487,25 +453,6 @@ def main():
                     st.markdown(f"- {item}")
             else:
                 st.info("No action items identified yet.")
-            with dashboard_tabs[7]: #or the correct index of the webRTC tab
-                st.subheader("WebRTC Meeting")
-
-                def video_frame_callback(frame):
-                    img = frame.to_ndarray(format="bgr24")
-                    return av.VideoFrame.from_ndarray(img, format="bgr24")
-
-                webrtc_streamer = webrtc.webrtc_streamer(
-                    key="example",
-                    video_frame_callback=video_frame_callback,
-                    rtc_configuration={
-                        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-                    },
-                )
-
-                if webrtc_streamer.state.playing:
-                    st.write("WebRTC stream is playing.")
-                else:
-                    st.write("WebRTC stream is not playing.")
 
     with insights_col:
         st.header("Insights")
