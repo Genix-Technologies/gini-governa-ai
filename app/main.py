@@ -9,7 +9,8 @@ import time
 import speech_recognition as sr  # For speech-to-text
 from gtts import gTTS           # For text-to-speech
 import pandas as pd             # For tabular display
-
+import streamlit_webrtc as webrtc
+import av
 # ------------------- CONFIGURATION & SESSION INITIALIZATION ------------------- #
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -61,11 +62,8 @@ def record_audio():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
         st.info("🎙️ Recording... Please speak into your microphone.")
-        recognizer.adjust_for_ambient_noise(source)  # Optional to improve accuracy
-        #audio_data = recognizer.listen(source)
-        audio_data = recognizer.listen(source, phrase_time_limit=30)
+        audio_data = recognizer.listen(source, phrase_time_limit=10)
     try:
-        st.info(audio_data)
         query_text = recognizer.recognize_google(audio_data)
         st.success(f"You said: {query_text}")
         return query_text
@@ -73,6 +71,34 @@ def record_audio():
         st.error(f"⚠ Could not process the audio: {e}")
         return ""
 
+
+def record_audio_streamlit():
+    """Records audio using Streamlit components and returns the recognized text."""
+    recognizer = sr.Recognizer()
+
+    # Use a placeholder for the audio recording status
+    status_placeholder = st.empty()
+
+    try:
+        with sr.Microphone() as source:
+            status_placeholder.info("🎙️ Recording... Please speak into your microphone.")
+            audio_data = recognizer.listen(source, phrase_time_limit=10)
+
+        status_placeholder.empty() #clear the info message.
+        query_text = recognizer.recognize_google(audio_data)
+        st.success(f"You said: {query_text}")
+        return query_text
+
+    except sr.UnknownValueError:
+        status_placeholder.error("⚠ Google Speech Recognition could not understand audio")
+        return ""
+    except sr.RequestError as e:
+        status_placeholder.error(f"⚠ Could not request results from Google Speech Recognition service; {e}")
+        return ""
+    except Exception as e:
+        status_placeholder.error(f"⚠ Could not process the audio: {e}")
+        return ""
+    
 # ---------- Text-to-Speech ----------
 def speak_text(text):
     """
@@ -310,13 +336,17 @@ def extract_action_items(transcript):
 def main():
     st.set_page_config(page_title="Governa Board Portal", layout="wide")
     st.title("Governa Board Portal")
-    if "mic_permission" not in st.session_state:
-        mic_access = request_microphone_permission()
-        st.session_state.mic_permission = mic_access
-        
+
     # Two-column layout: Main Workspace and Insights Panel
     main_col, insights_col = st.columns([3, 1])
 
+    st.title("Audio Recording with Streamlit")
+
+    if st.button("Start Recording"):
+        transcribed_text = record_audio_streamlit()
+        if transcribed_text:
+            st.write("Transcribed Text:", transcribed_text)
+            
     with main_col:
         st.header("Meeting Dashboard")
         st.markdown("### Meeting Agenda")
@@ -338,7 +368,8 @@ def main():
             "🎙 AI Chat", 
             "🗳 Voting", 
             "💬 Comments", 
-            "⏱️ Live Meeting Analysis"
+            "⏱️ Live Meeting Analysis",
+             "📹 WebRTC Meeting"
         ])
 
         # --- Upload Documents ---
@@ -456,6 +487,25 @@ def main():
                     st.markdown(f"- {item}")
             else:
                 st.info("No action items identified yet.")
+            with dashboard_tabs[7]: #or the correct index of the webRTC tab
+                st.subheader("WebRTC Meeting")
+
+                def video_frame_callback(frame):
+                    img = frame.to_ndarray(format="bgr24")
+                    return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+                webrtc_streamer = webrtc.webrtc_streamer(
+                    key="example",
+                    video_frame_callback=video_frame_callback,
+                    rtc_configuration={
+                        "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+                    },
+                )
+
+                if webrtc_streamer.state.playing:
+                    st.write("WebRTC stream is playing.")
+                else:
+                    st.write("WebRTC stream is not playing.")
 
     with insights_col:
         st.header("Insights")
@@ -468,16 +518,5 @@ def main():
         st.write("An overview of the latest compliance challenges and best practices.")
         st.markdown("[Read More](https://corpgov.law.harvard.edu)")
 
-
-def request_microphone_permission():
-    """Request microphone permission and check if the microphone is accessible."""
-    try:
-        with sr.Microphone() as source:
-            st.success("🎙️ Microphone is ready! You may proceed with voice features.")
-            return True
-    except Exception as e:
-        st.warning("⚠ Microphone permission is required to use voice features. Please allow microphone access.")
-        return False
-    
 if __name__ == "__main__":
     main()
