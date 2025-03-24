@@ -49,7 +49,7 @@
     </div>
 
     <script>
-        let html_url = "http://localhost";
+        let html_url = "https://governaai.genixits.com";
         let mediaRecorder;
         let audioChunks = [];
 
@@ -77,7 +77,7 @@
                         formData.append('audio', audioBlob, 'audio.webm'); // ✅ Correct extension
 
                         try {
-                            const apiUrl = `${html_url}:8502/upload_audio`;
+                            const apiUrl = `${html_url}/api/upload_audio`;
                             const response = await fetch(apiUrl, {
                                 method: 'POST',
                                 body: formData
