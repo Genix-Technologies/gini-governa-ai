@@ -9,8 +9,12 @@ import time
 import speech_recognition as sr  # For speech-to-text
 from gtts import gTTS           # For text-to-speech
 import pandas as pd             # For tabular display
-
+import streamlit.components.v1 as components
+from flask import Flask, request
 # ------------------- CONFIGURATION & SESSION INITIALIZATION ------------------- #
+AUDIO_FOLDER = "audio_files"
+if not os.path.exists(AUDIO_FOLDER):
+    os.makedirs(AUDIO_FOLDER)
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
@@ -307,10 +311,9 @@ def extract_action_items(transcript):
     st.session_state.action_items = items
 
 # ---------- Main App with Board Portal Layout ----------
+st.set_page_config(page_title="Governa Board Portal", layout="wide") #
 def main():
-    st.set_page_config(page_title="Governa Board Portal", layout="wide")
     st.title("Governa Board Portal")
-
     # Two-column layout: Main Workspace and Insights Panel
     main_col, insights_col = st.columns([3, 1])
 
@@ -318,14 +321,14 @@ def main():
         st.header("Meeting Dashboard")
         st.markdown("### Meeting Agenda")
         st.markdown("""
-**Board of Director Meeting Agenda**
-**March 27, 2025 ⋅ 10:30pm**
-- **10:30pm:** Call to Order & Approvals
-- **10:35pm:** Review Open Pre-Read Comments
-- **11:00pm:** CEO Summary
-- **11:15pm:** Deep Dive 1: Embracing AI in Product Design
-- **11:45pm:** Deep Dive 2: Digital Distribution
-- **Close**
+            **Board of Director Meeting Agenda**
+            **March 27, 2025 ⋅ 10:30pm**
+            - **10:30pm:** Call to Order & Approvals
+            - **10:35pm:** Review Open Pre-Read Comments
+            - **11:00pm:** CEO Summary
+            - **11:15pm:** Deep Dive 1: Embracing AI in Product Design
+            - **11:45pm:** Deep Dive 2: Digital Distribution
+            - **Close**
         """)
 
         dashboard_tabs = st.tabs([
@@ -381,26 +384,44 @@ def main():
         # --- AI Chat ---
         with dashboard_tabs[3]:
             st.subheader("AI-Powered Chat")
-            user_query = st.text_input("Ask about the meeting:")
-            if st.button("Ask AI"):
+            user_query = st.text_input("Ask about the meeting:", key="text_query")
+
+            if st.button("Ask AI", key="ask_text"):
                 if user_query:
-                    context = ""
-                    if st.session_state.meeting_transcript:
-                        context = f"Meeting Transcript (so far):\n{st.session_state.meeting_transcript}\n\n"
-                    enhanced_query = f"{context}Question: {user_query}"
+                    context = st.session_state.meeting_transcript if st.session_state.meeting_transcript else ""
+                    enhanced_query = f"{context}\n\nQuestion: {user_query}"
                     response = research_agent(enhanced_query)
-                    st.write("AI Response:")
-                    st.write(response)
-            st.subheader("Speak to AI")
-            if st.button("Start Voice Input"):
-                user_speech = record_audio()
-                if user_speech:
-                    st.write(f"You said: {user_speech}")
-                    response = research_agent(user_speech)
-                    st.write("AI Response:")
-                    st.write(response)
-                    # Optionally, also speak the response
-                    speak_text(response)
+                    st.session_state["ai_response"] = response
+                    st.session_state["last_query"] = user_query 
+
+            if "ai_response" in st.session_state:
+                st.write("AI Response:")
+                st.write(st.session_state["ai_response"])
+
+            # --- Voice Input ---
+            # Streamlit UI
+
+            # Load and display the HTML/JS for recording
+            with open("index.html", "r") as f:
+                html_code = f.read()
+            # Render the HTML in Streamlit
+            components.html(html_code, height=300)
+
+            #st.subheader("🎙️ Speak to AI")
+            #if st.button("Start Voice Input", key="voice_input"):
+            #    user_speech = record_audio()
+            #    if user_speech:
+             #       st.session_state["last_voice_query"] = user_speech
+             #       response = research_agent(user_speech)
+             #       st.session_state["voice_response"] = response
+             #       st.write(f"🎤 You said: {user_speech}")
+             #       st.write("AI Response:")
+             #       st.write(response)
+            #        speak_text(response)
+
+            if "voice_response" in st.session_state:
+                st.write("🎧 Last AI Response from Voice Input:")
+                st.write(st.session_state["voice_response"])
 
         # --- Voting ---
         with dashboard_tabs[4]:

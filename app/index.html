@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Recorder</title>
+    <style>
+        #record-btn {
+            background-color: white;
+            color: black;
+            border: 2px solid #d3d3d3;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        #record-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        #transcription-container {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #d3d3d3;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            height:100vh
+        }
+
+        audio {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button id="record-btn">Start Recording</button>
+    <audio id="audio-playback" style="visibility: hidden !important;" controls></audio>
+    <p id="status"></p> <!-- Status message -->
+    <div id="transcription-container" style="display: none;">
+        <h3>Transcription Result:</h3>
+        <p id="transcription-text"></p>
+        <h3>Generated Audio:</h3>
+        <audio id="response-audio" controls></audio>
+    </div>
+
+    <script>
+        let html_url = "http://localhost";
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('record-btn').addEventListener('click', async () => {
+            try {
+                if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                    // Get audio stream and request mic permission
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // ✅ Correct MIME type
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        document.getElementById('audio-playback').src = audioUrl;
+                        document.getElementById('audio-playback').style.visibility = "hidden"; // Show player
+                        
+                        // Send audio to backend
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, 'audio.webm'); // ✅ Correct extension
+
+                        try {
+                            const apiUrl = `${html_url}:8502/upload_audio`;
+                            const response = await fetch(apiUrl, {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (response.ok) {
+                                //const data = await response.json();
+                                const htmlResponse = await response.text();
+                                document.getElementById('transcription-container').innerHTML = htmlResponse;
+                                document.getElementById('status').innerText = "Audio processed successfully!";
+                                document.getElementById('transcription-container').style.display = "block";
+                                
+                                /*if (data.status === "success") {
+                                    document.getElementById('status').innerText = "Audio uploaded successfully!";
+                                    // Update transcription and audio playback
+                                    document.getElementById('transcription-text').innerText = data.message;
+                                    document.getElementById('response-audio').src = "/play_audio"; // Play generated audio
+                                    document.getElementById('transcription-container').style.display = "block";
+                                } else {
+                                    document.getElementById('status').innerText = "Error processing audio.";
+                                }*/
+                            } else {
+                                document.getElementById('status').innerText = "Error uploading audio.";
+                            }
+                        } catch (error) {
+                            document.getElementById('status').innerText = "Network error while uploading audio.";
+                        }
+
+                        audioChunks = []; // Clear after sending
+                    };
+
+                    mediaRecorder.start();
+                    document.getElementById('record-btn').innerText = 'Stop Recording';
+                    document.getElementById('status').innerText = "Recording...";
+                } else {
+                    mediaRecorder.stop();
+                    document.getElementById('record-btn').innerText = 'Start Recording';
+                    document.getElementById('status').innerText = "Recording stopped.";
+                }
+            } catch (error) {
+                document.getElementById('status').innerText = `Error accessing microphone: ${error.message}`;
+                console.error('Error accessing microphone:', error);
+            }
+        });
+    </script>
+</body>
+</html>
