@@ -7,9 +7,8 @@
             background-color: white;
             color: black;
             border: 2px solid #d3d3d3;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 10px;
+            padding: 2px 2px;
+            border-radius: 50px;
             cursor: pointer;
         }
 
@@ -38,18 +37,12 @@
     </style>
 </head>
 <body>
-    <button id="record-btn">Start Recording</button>
-    <audio id="audio-playback" style="visibility: hidden !important;" controls></audio>
+    <button id="record-btn"><span style="font-size: 28px;">&#127908;</span></button>
+    <audio id="audio-playback" style="visibility: hidden !important;height:2px" controls></audio>
     <p id="status"></p> <!-- Status message -->
-    <div id="transcription-container" style="display: none;">
-        <h3>Transcription Result:</h3>
-        <p id="transcription-text"></p>
-        <h3>Generated Audio:</h3>
-        <audio id="response-audio" controls></audio>
-    </div>
-
+    
     <script>
-        let html_url = "https://governaai.genixits.com";
+        let html_url = "http://127.0.0.1:8502" //"https://governaai.genixits.com/api";
         let mediaRecorder;
         let audioChunks = [];
 
@@ -77,19 +70,18 @@
                         formData.append('audio', audioBlob, 'audio.webm'); // ✅ Correct extension
 
                         try {
-                            const apiUrl = `${html_url}/api/upload_audio`;
+                            const apiUrl = `${html_url}/upload_audio`;
                             const response = await fetch(apiUrl, {
                                 method: 'POST',
                                 body: formData
                             });
-
                             if (response.ok) {
-                                //const data = await response.json();
-                                const htmlResponse = await response.text();
-                                document.getElementById('transcription-container').innerHTML = htmlResponse;
-                                document.getElementById('status').innerText = "Audio processed successfully!";
-                                document.getElementById('transcription-container').style.display = "block";
-                                
+                                const data = await response.json();
+                                //{"filename":"response_1742977804.mp3","status":true}
+                               // const htmlResponse = await response.text();
+                                //document.getElementById('transcription-container').innerHTML = htmlResponse;
+                                document.getElementById('status').innerText = "";
+                                //document.getElementById('transcription-container').style.display = "block";
                                 /*if (data.status === "success") {
                                     document.getElementById('status').innerText = "Audio uploaded successfully!";
                                     // Update transcription and audio playback
@@ -103,19 +95,18 @@
                                 document.getElementById('status').innerText = "Error uploading audio.";
                             }
                         } catch (error) {
-                            document.getElementById('status').innerText = "Network error while uploading audio.";
+                            document.getElementById('status').innerText = error;
                         }
-
                         audioChunks = []; // Clear after sending
                     };
 
                     mediaRecorder.start();
-                    document.getElementById('record-btn').innerText = 'Stop Recording';
-                    document.getElementById('status').innerText = "Recording...";
+                    document.getElementById('record-btn').innerHTML = '<span style="font-size: 28px;">&#128721;</span>';
+                    document.getElementById('status').innerText = 'Listening ...';
                 } else {
                     mediaRecorder.stop();
-                    document.getElementById('record-btn').innerText = 'Start Recording';
-                    document.getElementById('status').innerText = "Recording stopped.";
+                    document.getElementById('record-btn').innerHTML = '<span style="font-size: 28px;">&#127908;</span>';
+                    document.getElementById('status').innerText = "Processing.";
                 }
             } catch (error) {
                 document.getElementById('status').innerText = `Error accessing microphone: ${error.message}`;
@@ -123,5 +114,14 @@
             }
         });
     </script>
+     <script>
+        $(document).ready(function(){
+            alert("Hi")
+          fetch("./list_all_file").done(function(data){
+            console.log(data);
+          });
+        });
+      </script>
+
 </body>
 </html>

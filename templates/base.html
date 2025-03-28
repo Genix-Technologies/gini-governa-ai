@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>Governa</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@200..900&display=swap" rel="stylesheet">
+
+      
+        <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+       
+         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+        <!-- -->
+        <style>
+          body {
+            font-family: "Source Sans 3", sans-serif;
+            font-size: 17px !important;
+          }
+
+          /* Optionally target specific elements */
+          h1, h2, h3 {
+            font-family: "Source Sans 3", sans-serif;
+            font-weight: 700; /* Use 700 for bold */
+          }
+
+          p {
+            font-family: "Source Sans 3", sans-serif;
+            font-weight: 400; /* Normal weight */
+          }
+
+            .st-emotion-cache-1gulkj5 {
+  display: flex;
+  -moz-box-align: center;
+  align-items: center;
+  padding: 1rem;
+  background-color: rgb(240, 242, 246);
+  border-radius: 0.5rem;
+  color: rgb(49, 51, 63);
+}
+.st-emotion-cache-1r4qj8v {
+  color: rgb(49, 51, 63);
+  color-scheme: light;
+}
+.st-emotion-cache-u8hs99 {
+  margin-right: auto;
+  -moz-box-align: center;
+  align-items: center;
+  display: flex;
+}
+.st-emotion-cache-1gulkj5 {
+  color: rgb(49, 51, 63);
+}
+.st-emotion-cache-nwtri {
+  color: rgb(151, 166, 195);
+  margin-right: 1rem;
+}
+.st-emotion-cache-1gulkj5 {
+  color: rgb(49, 51, 63);
+}
+body {
+        overflow-x: hidden; /* Hide horizontal scroll */
+    }
+    html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .container-fluid {
+        max-width: 100%;
+    }
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+        </style>
+        <style>
+          #record-btn {
+              background-color: white;
+              color: black;
+              border: 2px solid #d3d3d3;
+              padding: 2px 2px;
+              border-radius: 50px;
+              cursor: pointer;
+          }
+  
+          #record-btn:hover {
+              background-color: #f0f0f0;
+          }
+  
+          #status {
+              margin-top: 20px;
+              font-size: 14px;
+              color: #333;
+          }
+  
+          #transcription-container {
+              margin-top: 10px;
+              padding: 10px;
+              border: 1px solid #d3d3d3;
+              border-radius: 10px;
+              background-color: #f9f9f9;
+              
+          }
+  
+          audio {
+              margin-top: 10px;
+          }
+      </style>
+
+
+<style>
+   .audio-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn-circle {
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    background-color: #fff;
+    color: #333;
+    font-size: 17px;
+    cursor: pointer;
+    margin: 2px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.btn-circle:hover {
+    background-color: #f5f5f5;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-circle:active {
+    transform: scale(0.95);
+}
+
+#stop-btn {
+    color: #e53935;
+}
+
+.upload-loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+</style>
+    </head>
+    {% block content %}
+    {% endblock %}
+    <footer class="py-4 bg-light mt-auto">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center justify-content-between small">
+                <div class="text-muted">Copyright &copy; 2025</div>
+                <div>
+                    <a href="#">Privacy Policy</a>
+                    &middot;
+                    <a href="#">Terms &amp; Conditions</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!--  <script src="js/scripts.js"></script>
+<script src="js/datatables-simple-demo.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" 
+crossorigin="anonymous"></script>
+-->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<audio id="audio-playback" style="visibility: hidden !important;height:2px" controls></audio>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchai-txt');
+        const searchButton = document.getElementById('search-ai-input');
+
+        // Disable button initially
+        searchButton.disabled = true;
+
+        // Listen for input changes
+        searchInput.addEventListener('input', function () {
+            if (searchInput.value.trim() !== '') {
+                searchButton.disabled = false;
+            } else {
+                searchButton.disabled = true;
+            }
+        });
+
+        // Add Enter key event listener
+        searchInput.addEventListener('keydown', async function (event) {
+            if (event.key === 'Enter' && searchInput.value.trim() !== '') {
+                event.preventDefault(); // Prevent form submission
+                await performSearch(); // Call the search function
+            }
+        });
+    });
+    async function performSearch() {
+        const searchValue = document.getElementById('searchai-txt').value.trim();
+        const searchButton = document.getElementById('search-ai-input');
+        if (searchValue === '') {
+            alert('Please enter a search term!');
+            return;
+        }
+        searchButton.disabled = true;
+        try {
+            const apiUrl = `/search-ai-input`;
+            document.getElementById('searchai-status').innerText = "Searching...";
+            document.getElementById('searchai-response-txt').innerHTML = "";
+         
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ "user_query": searchValue }) 
+            });
+            if (!response.ok) {
+                document.getElementById('searchai-status').innerText = "";
+                if (response.status === 500) {
+                    document.getElementById('searchai-status').innerText = "Internal Server Error (500) occurred.";
+                } else {
+                    document.getElementById('searchai-status').innerText = `Error: ${response.status} - ${response.data}`;
+                }
+                return;
+            }
+            const data = await response.json();
+            if (data.status) {   
+                document.getElementById('searchai-status').innerText = "";
+                document.getElementById('searchai-response-txt').innerHTML =  data.data;	
+            } else {
+                document.getElementById('searchai-status').innerText = "Error fetching response.";
+            }
+        } catch (error) {
+            document.getElementById('searchai-status').innerText = `Error: ${error.message}`;
+        } 
+        finally {
+            // 🔓 Re-enable button after response
+            searchButton.disabled = false;
+            //searchButton.innerText = "Search AI"; // Reset button text
+        }
+        console.log(`Searching for: ${searchValue}`);
+    }
+
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    document.getElementById('record-btn').addEventListener('click', async () => {
+        try {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                // Get audio stream and request mic permission
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); // ✅ Correct MIME type
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audio-playback').src = audioUrl;
+                    document.getElementById('audio-playback').style.visibility = "hidden"; // Show player
+                    
+                    // Send audio to backend
+                    const formData = new FormData();
+                    formData.append('audio', audioBlob, 'audio.webm'); // ✅ Correct extension
+
+                    try {
+                        const apiUrl = `/upload_audio`;
+                        document.getElementById('searchai-status').innerText = "Processing";
+                        document.getElementById('searchai-response-txt').innerHTML = "";
+                        document.getElementById('response-audio').style.visibility = "hidden";
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (!response.ok) {
+                            document.getElementById('searchai-status').innerText = "";
+                            if (response.status === 500) {
+                                document.getElementById('searchai-status').innerText = "Internal Server Error (500) occurred.";
+                                console.error("Error: Internal Server Error. Please check Flask logs.");
+                            } else {
+                                document.getElementById('searchai-status').innerText = `Error: ${response.status} - ${response.statusText}`;
+                            }
+                            return;
+                        }
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if(data.status){
+                              document.getElementById('response-audio').style.visibility = "visible";
+                              //document.getElementById('status').innerText = "";
+                              document.getElementById('searchai-status').innerText = "";
+                              document.getElementById("searchai-txt").value = "";
+                              //document.getElementById('status').innerText = "Audio uploaded successfully!";
+                              // Update transcription and audio playback
+                              //document.getElementById('transcription-text').innerText = data.message;
+                              document.getElementById('response-audio').src = `./response.mp3?aud_path=${data.filename}`;
+                              document.getElementById('response-audio').play();
+                              document.getElementById('stop-btn').style.display = "block";
+                              document.getElementById('searchai-txt').value = data.input_transcription;
+                              document.getElementById('searchai-response-txt').innerHTML =  data.output_transcription;	
+                              //document.getElementById('transcription-container').style.display = "block";
+                            }
+                          
+                        } else {
+                            document.getElementById('searchai-status').innerText = "Error uploading audio.";
+                        }
+                    } catch (error) {
+                        document.getElementById('searchai-status').innerText = error;
+                    }
+                    audioChunks = []; // Clear after sending
+                };
+
+                mediaRecorder.start();
+                document.getElementById('record-btn').innerHTML = '<span style="font-size: 15px;">&#128721;</span>';
+                document.getElementById('searchai-status').innerText = 'Listening ...';
+            } else {
+                mediaRecorder.stop();
+                document.getElementById('record-btn').innerHTML = '<span style="font-size: 15px;">&#127908;</span>';
+                document.getElementById('searchai-status').innerText = "Processing.";
+            }
+        } catch (error) {
+            document.getElementById('searchai-status').innerText = `Error accessing microphone: ${error.message}`;
+            console.error('Error accessing microphone:', error);
+        }
+    });
+</script>
+<script>
+    async function load_uploadedfiles(){
+        try {
+                const response = await fetch("./list_all_file");
+                let uploaded_documents = document.getElementById("uploaded_documents");
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+                const data = await response.json();
+                file_table = "" 
+                uploaded_documents.innerHTML = "<tr><td colspan='3' class='text-center'>loading</td></tr>"
+                if(data.data.length==0)
+                    uploaded_documents.innerHTML = "<tr><td colspan='3' class='text-center'>No files </td></tr>"
+                if (data.status === "success" && data.data.length > 0) {
+
+                    data.data.forEach((item, index) => {
+                    file_table += `<tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.file_name}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteFile('${item.file_id}', '${item.file_name}')">Delete</button>
+                                    </td>
+                                </tr>`;
+                });
+                    uploaded_documents.innerHTML = file_table;
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+    }
+   document.addEventListener('DOMContentLoaded', async function () {
+        await load_uploadedfiles();
+    });
+    async function deleteFile(fileId, fileName) {
+        const confirmDelete = confirm(`Are you sure you want to delete "${fileName}"?`);
+        if (!confirmDelete) {
+            return; // Exit if the user cancels the action
+        }
+        try {
+            // 🔥 Send DELETE request to API
+            const response = await fetch(`/delete_file/${fileId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to delete file. Status: ${response.status}`);
+            }
+
+            // ✅ Handle success response
+            const result = await response.json();
+            if (result.status) {
+                alert(`✅ File "${fileName}" deleted successfully!`);
+                // Refresh the file list or remove the row from the table
+                load_uploadedfiles();
+            } else {
+                alert(`⚠️ Error: ${result.message}`);
+            }
+        } catch (error) {
+            // ❌ Handle error
+            console.error("Error deleting file:", error);
+            alert(`❌ Error deleting file: ${error.message}`);
+        }
+    }
+
+    async function uploadFiles(event) 
+    {
+        const files = event.target.files;
+        const statusDiv = document.getElementById("upload-status");
+        const loader = document.getElementById("upload-loader");
+
+        if (files.length === 0) {
+            statusDiv.innerHTML = "<p>No files selected!</p>";
+            return;
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+            formData.append("file", files[i]);
+        }
+
+        // Show loader and status while uploading
+        loader.style.display = "inline-block";
+        statusDiv.innerHTML = `<p>Uploading ${files.length} file(s)... ⏳</p>`;
+
+            try {
+                const response = await fetch("/upload_file", {
+                method: "POST",
+                body: formData,
+                });
+
+                if (response.ok) {
+                const result = await response.json();
+                if (result.status === "success") {
+                    statusDiv.innerHTML = `<p style="color: green;">✅ Files uploaded successfully!</p>`;
+                    await load_uploadedfiles();
+                } else {
+                    statusDiv.innerHTML = `<p style="color: red;">❌ Error: ${result.message}</p>`;
+                }
+                } else {
+                 statusDiv.innerHTML = `<p style="color: red;">❌ Upload failed. Server returned ${response.status}</p>`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<p style="color: red;">❌ Error uploading file(s): ${error.message}</p>`;
+                console.error("Error:", error);
+            } finally {
+                // Hide loader after upload completion
+                loader.style.display = "none";
+            }
+        }
+
+  </script>
+
+</body>
+</html>
